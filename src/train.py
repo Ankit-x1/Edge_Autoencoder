@@ -6,9 +6,19 @@ import torch.optim as optim
 import yaml
 import os
 
-cfg = yaml.safe_load(open("./config/config.yaml"))
+config_path = "./config/config.yaml"
+data_path = "../data/sample_timeseries.csv"
 
-dataset = TimeSeriesDataset("../data/sample_timeseries.csv", window=cfg["window"])
+if not os.path.exists(config_path):
+    raise FileNotFoundError(f"Config file not found: {config_path}")
+
+cfg = yaml.safe_load(open(config_path))
+
+if not os.path.exists(data_path):
+    raise FileNotFoundError(f"CSV data file not found: {data_path}")
+
+dataset = TimeSeriesDataset(data_path, window=cfg["window"])
+
 loader = DataLoader(dataset, batch_size=cfg["batch_size"], shuffle=True)
 
 model = LSTMAutoencoder(
@@ -35,5 +45,6 @@ for epoch in range(cfg["epochs"]):
 
     print(f"Epoch {epoch+1}/{cfg['epochs']}: loss = {total_loss/len(loader)}")
 
+os.makedirs("../models", exist_ok=True)
 torch.save(model.state_dict(), "../models/best_model.pth")
 print("Model saved!")
